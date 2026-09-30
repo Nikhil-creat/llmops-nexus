@@ -6,6 +6,16 @@ Drop-in **OpenAI-compatible proxy** that serves repeated *and paraphrased* promp
 
 **Live demo (GitHub Pages):** `https://nikhil-creat.github.io/llmops-nexus/` — the full cache algorithm running in your browser.
 
+*Designed and Developed by*
+# **NIKHIL CHARY SRIRAMOJU**
+BTech CSE (Final Year)
+
+- GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
+- LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
+- Email: sriramojunikhil66@gmail.com
+- Instagram: [@nikhil__sriramoju](https://www.instagram.com/nikhil__sriramoju)
+- Facebook: [Profile](https://www.facebook.com/profile.php?id=100079201124141)
+
 ## Features
 - **Two-tier cache:** L1 exact-hash LRU → L2 vector similarity (Redis Stack HNSW, Qdrant, or in-memory)
 - **Embeddings:** OpenAI `text-embedding-3-small`, or a deterministic local hashing embedder (offline / CI)
@@ -44,15 +54,5 @@ Start at threshold **0.92** with OpenAI embeddings (0.80 for the local embedder)
 - Qdrant has no native TTL; expiry is enforced at read time.
 - Prices in `app/metrics.py` are approximate — edit for your contract.
 - GitHub Pages hosts only the static simulator (`/docs`); the FastAPI backend runs via Docker / any container host.
-
-## Designed and Developed by
-**NIKHIL CHARY SRIRAMOJU**
-BTech CSE (Final Year)
-
-- GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
-- LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
-- Email: sriramojunikhil66@gmail.com
-- Instagram: [@nikhil__sriramoju](https://www.instagram.com/nikhil__sriramoju)
-- Facebook: [Profile](https://www.facebook.com/profile.php?id=100079201124141)
 
 MIT License
