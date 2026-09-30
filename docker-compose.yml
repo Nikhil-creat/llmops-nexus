@@ -1,0 +1,35 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      MOCK_UPSTREAM: ${MOCK_UPSTREAM:-1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      EMBEDDER: ${EMBEDDER:-auto}
+      VECTOR_STORE: ${VECTOR_STORE:-redis}
+      REDIS_URL: redis://redis:6379
+      QDRANT_URL: http://qdrant:6333
+      SIM_THRESHOLD: ${SIM_THRESHOLD:-}
+      CACHE_TTL_S: ${CACHE_TTL_S:-3600}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+    depends_on: [redis, qdrant]
+  redis:
+    image: redis/redis-stack-server:latest
+    ports: ["6379:6379"]
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+  prometheus:
+    image: prom/prometheus:latest
+    volumes: ["./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+    depends_on: [prometheus]

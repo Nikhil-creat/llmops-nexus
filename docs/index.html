@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>LLMOps Nexus — Semantic Caching Layer for LLM APIs</title>
+<meta name="description" content="Drop-in OpenAI-compatible semantic cache. Designed and developed by Nikhil Chary Sriramoju.">
+<style>
+:root{--void:#04050a;--panel:#0b0e1a;--line:#1b2140;--ion:#5cf2ff;--plasma:#8b5cff;--ember:#ff5c8a;--lime:#7dffb2;--tx:#dfe7ff;--mut:#7d88b0;
+--sans:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;--mono:ui-monospace,"JetBrains Mono","SF Mono",Menlo,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+html{background:var(--void);color:var(--tx);font-family:var(--sans);-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);min-height:100vh;
+background:radial-gradient(1200px 600px at 80% -10%,#1a1150 0,transparent 60%),radial-gradient(900px 500px at -10% 30%,#06263a 0,transparent 60%),var(--void)}
+a{color:var(--ion);text-decoration:none}a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--ion);outline-offset:2px}
+.wrap{max-width:1180px;margin:auto;padding:0 18px}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0;gap:12px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:.02em;font-size:1.15rem}
+.brand i{font-style:normal;color:var(--ion)}
+.pill{font:600 .75rem var(--mono);border:1px solid var(--line);border-radius:99px;padding:6px 12px;color:var(--mut);display:inline-flex;gap:8px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime)}
+h1{font-size:clamp(2rem,6vw,3.6rem);line-height:1.02;letter-spacing:-.03em;font-weight:800;max-width:15ch;margin:18px 0 10px}
+h1 span{background:linear-gradient(90deg,var(--ion),var(--plasma) 55%,var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--mut);max-width:62ch;line-height:1.6}
+.stage{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin:26px 0}
+@media(max-width:900px){.stage{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,#0d1120cc,#080b16cc);border:1px solid var(--line);border-radius:18px;padding:16px;backdrop-filter:blur(8px)}
+.card h2{font-size:.95rem;font-weight:700;margin-bottom:10px}
+#space{position:relative;overflow:hidden;padding:0;min-height:380px}
+canvas{width:100%;height:100%;display:block;position:absolute;inset:0}
+.hud{position:absolute;left:14px;bottom:12px;right:14px;display:flex;justify-content:space-between;font:.72rem var(--mono);color:var(--mut);gap:8px;flex-wrap:wrap;pointer-events:none}
+.hud b{color:var(--ion)}
+.verdict{position:absolute;top:14px;left:14px;font:700 .8rem var(--mono);padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:#05070fcc}
+textarea,input[type=text]{width:100%;background:#060814;border:1px solid var(--line);color:var(--tx);border-radius:12px;padding:12px;font:1rem var(--sans);resize:vertical}
+button{cursor:pointer;font:700 .85rem var(--sans);border-radius:12px;border:1px solid var(--line);background:#101534;color:var(--tx);padding:10px 14px}
+button.go{background:linear-gradient(90deg,var(--ion),var(--plasma));color:#04050a;border:0}
+button:hover{filter:brightness(1.15)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chips button{font-weight:500;font-size:.75rem;padding:6px 10px;border-radius:99px;color:var(--mut)}
+.ctl{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font:.78rem var(--mono);color:var(--mut);margin-top:10px}
+input[type=range]{accent-color:var(--plasma);width:100%}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi small{color:var(--mut);font-size:.75rem}
+.kpi div{font:800 1.7rem var(--mono);margin-top:4px}
+.ring{display:flex;align-items:center;gap:12px}
+.ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+#log{font:.76rem var(--mono);max-height:230px;overflow:auto}
+#log div{display:grid;grid-template-columns:78px 52px 1fr 62px;gap:8px;padding:6px 0;border-bottom:1px solid #12183a;color:var(--mut)}
+#log em{font-style:normal;font-weight:700}
+.k-exact,.k-semantic{color:var(--lime)}.k-miss{color:var(--ember)}.k-bypass{color:#ffd166}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:.8rem var(--mono)}
+.flow span{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#0a0d1c}
+.flow b{color:var(--plasma)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+td,th{text-align:left;padding:9px 8px;border-bottom:1px solid #12183a}th{color:var(--ion);font-weight:700}
+td:nth-child(2){font-family:var(--mono);color:var(--tx)}td:last-child{color:var(--mut)}
+#spark{position:static;width:100%;height:90px}
+.sec{margin:30px 0}
+.sec>h2{font-size:1.25rem;margin-bottom:12px;letter-spacing:-.01em}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:800px){.who{grid-template-columns:1fr}}
+.who h3{font-size:1.4rem;letter-spacing:-.01em}.who p{color:var(--mut);margin:4px 0 12px}
+.links{display:grid;gap:8px;font:.85rem var(--mono)}
+.links a{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;color:var(--tx)}
+.links a:hover{border-color:var(--ion);text-decoration:none}.links a span{color:var(--mut)}
+footer{padding:28px 0 40px;color:var(--mut);font:.78rem var(--mono);text-align:center}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body><div class="wrap">
+<header><div class="brand">LLMOps<i>Nexus</i></div>
+<div class="pill"><span class="dot"></span><span id="mode">Simulator · runs fully in your browser</span></div></header>
+
+<h1>Stop paying twice for the <span>same question.</span></h1>
+<p class="lead">A drop-in OpenAI-compatible proxy that answers repeated and paraphrased prompts from a vector cache. Type a question below (or hit Load test), then ask it again in different words and watch it land next to its twin in embedding space.</p>
+
+<section class="stage">
+  <div class="card" id="space"><canvas id="cv"></canvas><div class="verdict" id="verdict">awaiting first query</div>
+    <div class="hud"><span>embedding space · <b id="nn">0</b> cached vectors</span><span>ring = similarity to nearest neighbour</span></div></div>
+  <div class="card">
+    <h2>Query console</h2>
+    <textarea id="q" rows="3" placeholder="Ask anything, e.g. How do I reset my password?"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="go" id="send" style="flex:1">Send to proxy</button><button id="flush">Flush</button><button id="bench" title="Fire 40 paraphrased prompts">Load test</button></div>
+    <div class="chips" id="chips"></div>
+    <div class="ctl"><label for="thr">threshold</label><input id="thr" type="range" min="0.5" max="0.99" step="0.01" value="0.80"><b id="thrv">0.80</b></div>
+    <div class="ctl"><label for="ttl">ttl (s)</label><input id="ttl" type="range" min="5" max="3600" step="5" value="600"><b id="ttlv">600</b></div>
+    <div class="ctl"><label for="guard">guards</label><input id="guard" type="checkbox" checked><b>numbers · negation</b></div>
+  </div>
+</section>
+
+<section class="kpis">
+  <div class="card kpi"><div class="ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="#1b2140" stroke-width="4"/><circle id="arc" cx="18" cy="18" r="15" fill="none" stroke="var(--ion)" stroke-width="4" stroke-dasharray="0 100" pathLength="100" stroke-linecap="round"/></svg><div><small>hit rate</small><div id="k-hit">0%</div></div></div></div>
+  <div class="card kpi"><small>saved (gpt-4o pricing)</small><div id="k-usd">$0.0000</div></div>
+  <div class="card kpi"><small>tokens not regenerated</small><div id="k-tok">0</div></div>
+  <div class="card kpi"><small>avg hit vs miss</small><div id="k-ms" style="font-size:1.25rem">– / –</div></div>
+</section>
+
+<section class="sec card"><h2>Hit rate over time</h2><canvas id="spark"></canvas></section>
+<section class="sec card"><h2>Live request log</h2><div id="log"></div></section>
+
+<section class="sec"><h2>Request pipeline</h2><div class="card"><div class="flow">
+<span>Client</span><b>›</b><span>FastAPI proxy</span><b>›</b><span>Guards · TTL policy</span><b>›</b><span>L1 exact hash</span><b>›</b><span>Embed</span><b>›</b><span>Vector search (Redis / Qdrant)</span><b>›</b><span>Similarity ≥ threshold ?</span><b>›</b><span>HIT → replay</span><b>/</b><span>MISS → LLM → store</span></div>
+<p class="lead" style="margin-top:12px">Extras: single-flight request coalescing, SSE replay for streaming clients, scope isolation per model + system prompt, adaptive TTL by temperature, freshness guard for time-sensitive prompts, Prometheus + Grafana observability.</p></div></section>
+
+<section class="sec"><h2>Tech stack</h2><div class="card"><table>
+<tr><th>Component</th><th>Tool / Library</th><th>Why this choice</th></tr>
+<tr><td>Language</td><td>Python 3.11+</td><td>Ecosystem compatibility</td></tr>
+<tr><td>Embeddings</td><td>OpenAI text-embedding-3-small</td><td>Fast, cheap, high quality (local hashing fallback offline)</td></tr>
+<tr><td>Vector store</td><td>Redis Stack (HNSW) · Qdrant</td><td>Sub-millisecond lookups</td></tr>
+<tr><td>Proxy layer</td><td>FastAPI</td><td>Drop-in API replacement</td></tr>
+<tr><td>Cache policy</td><td>TTL + similarity threshold + guards</td><td>Tunable hit rate vs. freshness</td></tr>
+<tr><td>Monitoring</td><td>Prometheus + Grafana</td><td>Real-time hit-rate dashboards</td></tr>
+<tr><td>Containerization</td><td>Docker + docker-compose</td><td>Multi-service orchestration</td></tr></table></div></section>
+
+<section class="sec"><h2>Designed and developed by</h2><div class="card who"><div>
+<h3>NIKHIL CHARY SRIRAMOJU</h3><p>BTech CSE (Final Year)</p>
+<p style="font-size:.85rem;line-height:1.6">Builds agentic AI, RAG and LLMOps systems. This project demonstrates infrastructure-level thinking: lower latency, lower cost, measurable ROI.</p></div>
+<div class="links">
+<a href="https://github.com/Nikhil-creat" target="_blank" rel="noopener">GitHub <span>Nikhil-creat</span></a>
+<a href="https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a" target="_blank" rel="noopener">LinkedIn <span>nikhil-chary-sriramoju</span></a>
+<a href="mailto:sriramojunikhil66@gmail.com">Email <span>sriramojunikhil66@gmail.com</span></a>
+<a href="https://www.instagram.com/nikhil__sriramoju" target="_blank" rel="noopener">Instagram <span>@nikhil__sriramoju</span></a>
+<a href="https://www.facebook.com/profile.php?id=100079201124141" target="_blank" rel="noopener">Facebook <span>Profile</span></a></div></div></section>
+
+<footer>© 2026 LLMOps Nexus · Designed and developed by NIKHIL CHARY SRIRAMOJU</footer>
+</div>
+<script>
+const $=s=>document.querySelector(s),DIM=384;
+const STOP=new Set("a an the to of is are was be do does did how what why can could would should i me my you your we please tell explain for in on with and or it this that there any some about give show".split(" "));
+const VOL=/\b(today|tonight|now|latest|currently|current|right now|this (week|month|year)|news|weather|stock price|score)\b/i;
+const h=s=>{let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)}return x>>>0};
+const stem=t=>{for(const s of["ing","ed","es","s"])if(t.length>s.length+3&&t.endsWith(s))return t.slice(0,-s.length);return t};
+function embed(text){const v=new Float32Array(DIM),T=(text.toLowerCase().match(/[a-z0-9]+/g)||[]).filter(t=>!STOP.has(t)).map(stem);
+ for(const t of T){v[h("w:"+t)%DIM]+=2;const g="^"+t+"$";for(let i=0;i<g.length-2;i++)v[h("c:"+g.slice(i,i+3))%DIM]+=.5}
+ for(let i=0;i<T.length-1;i++)v[h("b:"+T[i]+T[i+1])%DIM]+=1;
+ let n=0;for(const a of v)n+=a*a;n=Math.sqrt(n)||1;for(let i=0;i<DIM;i++)v[i]/=n;return v}
+const dot=(a,b)=>{let s=0;for(let i=0;i<DIM;i++)s+=a[i]*b[i];return s};
+let seed=7;const rnd=()=>((seed=(seed*16807)%2147483647)/2147483647);
+const gauss=()=>Math.sqrt(-2*Math.log(rnd()+1e-9))*Math.cos(6.2832*rnd());
+const P1=Float32Array.from({length:DIM},gauss),P2=Float32Array.from({length:DIM},gauss);
+const nums=s=>(s.match(/\d+(\.\d+)?/g)||[]).sort().join(","),neg=s=>/\b(not|no|never|without|don't|dont|cannot|can't|cant)\b/i.test(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),est=n=>Math.max(1,Math.round(n/4));
+const S={series:[],entries:[],exact:new Map(),n:{hit:0,miss:0},usd:0,tok:0,ms:{hit:[0,0],miss:[0,0]},pulses:[],last:null,api:null};
+const PRESETS=["How do I reset my password?","how can I reset my password","Explain the TCP three-way handshake","what is the tcp 3 way handshake","convert 5 km to miles","convert 50 km to miles","What's the weather today?"];
+$("#chips").innerHTML=PRESETS.map(p=>`<button>${p}</button>`).join("");
+$("#chips").onclick=e=>{if(e.target.tagName=="BUTTON"){$("#q").value=e.target.textContent;ask()}};
+["thr","ttl"].forEach(i=>$("#"+i).oninput=()=>$("#"+i+"v").textContent=$("#"+i).value);
+
+async function simulate(q){
+ const t0=performance.now(),thr=+$("#thr").value,now=Date.now();
+ if(VOL.test(q)){await sleep(700+Math.random()*300);return{kind:"bypass",sim:0,ms:performance.now()-t0,why:"time-sensitive"}}
+ const key=q.toLowerCase().split(/\s+/).join(" "),ex=S.exact.get(key);
+ if(ex&&ex.exp>now){ex.hits++;return{kind:"exact",sim:1,ms:performance.now()-t0,e:ex}}
+ const v=embed(q);let best=null,bs=-1;
+ for(const e of S.entries){if(e.exp<now)continue;const s=dot(v,e.vec);if(s>bs){bs=s;best=e}}
+ const safe=best&&(!$("#guard").checked||(nums(q)===nums(best.prompt)&&neg(q)===neg(best.prompt)));
+ if(best&&bs>=thr&&safe){best.hits++;return{kind:"semantic",sim:bs,ms:performance.now()-t0+.4,e:best}}
+ await sleep(800+Math.random()*350);
+ const ctok=140+Math.floor(Math.random()*160),e={prompt:q,vec:v,exp:now+$("#ttl").value*1e3,hits:0,tok:est(q.length)+ctok,pt:est(q.length),ct:ctok,x:0,y:0};
+ S.entries.push(e);S.exact.set(key,e);
+ return{kind:"miss",sim:Math.max(bs,0),ms:performance.now()-t0,e,why:best&&bs>=thr&&!safe?"guard rejected":""}}
+
+async function live(q){
+ const t0=performance.now(),r=await fetch(S.api+"/v1/chat/completions",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini",messages:[{role:"user",content:q}]})});
+ const j=await r.json(),x=(r.headers.get("x-cache")||"MISS").toLowerCase(),kind=x.startsWith("hit-")?x.slice(4):x,u=j.usage||{};
+ let e=S.entries.find(z=>z.prompt===q);if(!e){e={prompt:q,vec:embed(q),exp:1e18,hits:0,tok:u.total_tokens||100,pt:u.prompt_tokens||10,ct:u.completion_tokens||90};S.entries.push(e)}
+ return{kind,sim:+(r.headers.get("x-cache-similarity")||0),ms:performance.now()-t0,e}}
+
+async function ask(){
+ const q=$("#q").value.trim();if(!q)return;$("#send").disabled=true;
+ let r;try{r=S.api?await live(q):await simulate(q)}catch(err){r={kind:"bypass",sim:0,ms:0,why:"error"}}
+ $("#send").disabled=false;const hit=r.kind=="exact"||r.kind=="semantic";
+ if(hit){S.n.hit++;S.ms.hit[0]++;S.ms.hit[1]+=r.ms;S.tok+=r.e.tok;S.usd+=(r.e.pt*2.5+r.e.ct*10)/1e6}
+ else if(r.kind=="miss"){S.n.miss++;S.ms.miss[0]++;S.ms.miss[1]+=r.ms}
+ S.last={...r,q};S.pulses.push({t:0,hit:hit,e:r.e,q:embed(q)});
+ const L=$("#log"),d=document.createElement("div");
+ d.innerHTML=`<span>${new Date().toLocaleTimeString()}</span><em class="k-${r.kind}">${r.kind}</em><span>${q.replace(/</g,"&lt;").slice(0,70)}${r.why?" · "+r.why:""}</span><span>${r.ms.toFixed(1)}ms</span>`;L.prepend(d);
+ const v=$("#verdict");v.textContent=`${r.kind.toUpperCase()}${r.sim?" · sim "+r.sim.toFixed(3):""} · ${r.ms.toFixed(1)} ms`;v.style.color=hit?"var(--lime)":r.kind=="miss"?"var(--ember)":"#ffd166";
+ render()}
+function render(){
+ const tot=S.n.hit+S.n.miss,hr=tot?S.n.hit/tot:0,avg=b=>S.ms[b][0]?S.ms[b][1]/S.ms[b][0]:0;
+ S.series.push(hr);spark();
+ $("#arc").setAttribute("stroke-dasharray",`${hr*100} 100`);$("#k-hit").textContent=(hr*100).toFixed(0)+"%";
+ $("#k-usd").textContent="$"+S.usd.toFixed(4);$("#k-tok").textContent=S.tok.toLocaleString();
+ $("#k-ms").textContent=`${avg("hit").toFixed(1)}ms / ${avg("miss").toFixed(0)}ms`;$("#nn").textContent=S.entries.length}
+function spark(){const c=$("#spark"),g=c.getContext("2d"),w=c.width=c.clientWidth*2,hh=c.height=180;g.clearRect(0,0,w,hh);
+ if(S.series.length<2)return;const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,"#5cf2ff");gr.addColorStop(1,"#8b5cff");
+ g.strokeStyle=gr;g.lineWidth=3;g.beginPath();S.series.forEach((v,i)=>{const x=i/(S.series.length-1)*w,y=hh-8-v*(hh-16);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+ g.lineTo(w,hh);g.lineTo(0,hh);g.fillStyle="rgba(139,92,255,.12)";g.fill()}
+const FAM=[["How do I reset my password?","how can I reset my password","steps to reset password","I forgot my password, how to reset it"],["Explain the TCP three-way handshake","what is the tcp 3 way handshake","how does tcp handshake work"],["What is a vector database?","explain vector databases","tell me what a vector database is"],["Difference between REST and GraphQL","REST vs GraphQL differences","how is graphql different from rest"],["Write a python function to reverse a string","python function that reverses a string"]];
+$("#bench").onclick=async()=>{$("#bench").disabled=true;for(let i=0;i<40;i++){const f=FAM[Math.floor(Math.random()*FAM.length)];$("#q").value=f[Math.floor(Math.random()*f.length)];await ask()}$("#bench").disabled=false};
+$("#send").onclick=ask;$("#q").onkeydown=e=>{if(e.key=="Enter"&&!e.shiftKey){e.preventDefault();ask()}};
+$("#flush").onclick=async()=>{if(S.api)await fetch(S.api+"/admin/cache",{method:"DELETE"}).catch(()=>{});S.entries=[];S.exact.clear();S.pulses=[];render()};
+
+/* ---------- embedding-space canvas ---------- */
+const cv=$("#cv"),cx=cv.getContext("2d");let W,H,DPR;
+function size(){DPR=Math.min(2,devicePixelRatio||1);const b=cv.parentElement.getBoundingClientRect();W=b.width;H=b.height;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",size);size();
+const pos=v=>{let a=0,b=0;for(let i=0;i<DIM;i++){a+=v[i]*P1[i];b+=v[i]*P2[i]}return[W/2+a*W*.2,H/2+b*H*.2]};
+const stars=Array.from({length:70},()=>({x:rnd(),y:rnd(),r:rnd()*1.4+.3,s:rnd()*.4+.1}));
+let tick=0;
+function frame(){tick++;cx.clearRect(0,0,W,H);
+ for(const s of stars){cx.fillStyle=`rgba(140,160,255,${.15+.25*Math.abs(Math.sin(tick*.01*s.s+s.x*9))})`;cx.fillRect(s.x*W,s.y*H,s.r,s.r)}
+ cx.strokeStyle="rgba(92,242,255,.06)";cx.lineWidth=1;for(let i=1;i<8;i++){cx.beginPath();cx.moveTo(0,H*i/8);cx.lineTo(W,H*i/8);cx.stroke();cx.beginPath();cx.moveTo(W*i/8,0);cx.lineTo(W*i/8,H);cx.stroke()}
+ const now=Date.now();
+ for(const e of S.entries){const[x,y]=pos(e.vec),old=e.exp<now;const g=cx.createRadialGradient(x,y,0,x,y,16+e.hits*3);
+  g.addColorStop(0,old?"rgba(125,136,176,.5)":"rgba(139,92,255,.9)");g.addColorStop(1,"rgba(139,92,255,0)");cx.fillStyle=g;cx.beginPath();cx.arc(x,y,16+e.hits*3,0,7);cx.fill();
+  cx.fillStyle=old?"#7d88b0":"#dfe7ff";cx.beginPath();cx.arc(x,y,3,0,7);cx.fill()}
+ S.pulses=S.pulses.filter(p=>p.t<90);
+ for(const p of S.pulses){p.t++;const[qx,qy]=pos(p.q),k=p.t/90,col=p.hit?"125,255,178":"255,92,138";
+  cx.strokeStyle=`rgba(${col},${1-k})`;cx.lineWidth=2;cx.beginPath();cx.arc(qx,qy,6+k*70,0,7);cx.stroke();
+  cx.fillStyle=`rgba(92,242,255,${1-k*.6})`;cx.beginPath();cx.arc(qx,qy,5,0,7);cx.fill();
+  if(p.hit&&p.e){const[ex,ey]=pos(p.e.vec);cx.strokeStyle=`rgba(${col},${.9-k*.9})`;cx.setLineDash([5,5]);cx.beginPath();cx.moveTo(qx,qy);cx.lineTo(ex,ey);cx.stroke();cx.setLineDash([])}}
+ requestAnimationFrame(frame)}
+frame();
+
+/* ---------- live mode: ?api=http://localhost:8000 or served by the backend itself ---------- */
+(async()=>{const q=new URLSearchParams(location.search).get("api");
+ for(const base of [q,""].filter(x=>x!==null)){try{const r=await fetch(base+"/healthz",{signal:AbortSignal.timeout(1500)});if((await r.json()).status==="ok"){S.api=base;$("#mode").textContent="Live · connected to proxy "+(base||location.origin);return}}catch(e){}}})();
+</script></body></html>
